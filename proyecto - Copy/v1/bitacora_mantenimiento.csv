@@ -1,0 +1,8 @@
+Timestamp,Linea,Accion
+2026-02-19 14:23:43,2,calibrar
+2026-02-19 14:25:27,3,engrasar
+2026-02-19 14:33:00,1,calibrar
+2026-02-19 14:33:23,1,reinicio
+2026-02-19 14:35:57,1,Cambio de Servomotor,56,100.0
+2026-02-19 14:36:20,1,Limpieza de Sensor Óptico,12,100.0
+2026-02-19 14:38:08,1,Reinicio de Software (Soft Reset),158,80.0
