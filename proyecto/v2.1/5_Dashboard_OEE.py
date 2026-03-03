@@ -36,6 +36,7 @@ axes_lineas = {1: ax_l1, 2: ax_l2, 3: ax_l3}
 
 # GUI state (se configura en la app)
 APP = None
+DEFAULT_LINE = 1
 
 def calcular_oee(df_linea):
     if df_linea.empty: return 0, 0, 0, 0
@@ -111,26 +112,33 @@ def animar(i):
         if df.empty:
             return
 
+        # Solo dibujar la línea seleccionada (modo single-line)
+        selected = DEFAULT_LINE
+        if APP is not None:
+            try:
+                selected = int(APP.selected_line.get())
+            except Exception:
+                selected = DEFAULT_LINE
+
         oee_global_acum = 0
         lineas_activas = 0
 
-        # --- DIBUJAR CADA LÍNEA ---
+        # Limpiar ejes no usados
         for lid in [1, 2, 3]:
-            if APP is not None and not APP.line_vars[lid].get():
-                # limpiar ejes si la línea está desactivada
+            if lid != selected:
                 axes_lineas[lid].clear()
                 axes_lineas[lid].text(0.5, 0.5, f"LÍNEA {lid} (oculta)", ha='center', color='gray')
-                continue
-            df_l = df[df['Linea'] == lid]
-            d, c, r, o = calcular_oee(df_l)
-            dibujar_medidor(axes_lineas[lid], f"LÍNEA {lid}", d, c, r, o)
 
-            oee_global_acum += o
-            if not df_l.empty:
-                lineas_activas += 1
+        df_l = df[df['Linea'] == selected]
+        d, c, r, o = calcular_oee(df_l)
+        dibujar_medidor(axes_lineas[selected], f"LÍNEA {selected}", d, c, r, o)
+        oee_global_acum += o
+        if not df_l.empty:
+            lineas_activas += 1
 
         # --- DIBUJAR GLOBAL ---
         ax_global.clear()
+        # En modo single-line, el global es la misma métrica de la línea seleccionada
         oee_promedio = oee_global_acum / lineas_activas if lineas_activas > 0 else 0
 
         color_g = COLOR_OEE_ALTO if oee_promedio >= 85 else COLOR_OEE_MEDIO if oee_promedio >= 65 else COLOR_OEE_BAJO
@@ -159,8 +167,8 @@ class DashboardApp:
         self.master.title('Dashboard OEE - TOP')
 
         self.paused = tk.BooleanVar(value=False)
-        # Line visibility
-        self.line_vars = {1: tk.BooleanVar(value=True), 2: tk.BooleanVar(value=True), 3: tk.BooleanVar(value=True)}
+        # Selected single line (string var for Combobox)
+        self.selected_line = tk.StringVar(value=str(DEFAULT_LINE))
         self.interval = tk.IntVar(value=2000)
         self.canvas = None
         self.ani = None
@@ -176,9 +184,9 @@ class DashboardApp:
 
         ttk.Label(left, text='Controles', font=('Segoe UI', 12, 'bold')).pack(pady=4)
 
-        ttk.Checkbutton(left, text='Mostrar L1', variable=self.line_vars[1]).pack(anchor='w')
-        ttk.Checkbutton(left, text='Mostrar L2', variable=self.line_vars[2]).pack(anchor='w')
-        ttk.Checkbutton(left, text='Mostrar L3', variable=self.line_vars[3]).pack(anchor='w')
+        ttk.Label(left, text='Línea (single-line mode):').pack(anchor='w')
+        cbo = ttk.Combobox(left, values=[1,2,3], textvariable=self.selected_line, state='readonly', width=6)
+        cbo.pack(anchor='w', pady=2)
 
         self.btn_pause = ttk.Button(left, text='Pausar', command=self.toggle_pause)
         self.btn_pause.pack(fill='x', pady=8)
