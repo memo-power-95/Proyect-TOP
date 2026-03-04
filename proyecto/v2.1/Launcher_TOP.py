@@ -70,6 +70,8 @@ class LauncherApp:
         self.crear_boton(buttons, "🗂️ 3. DASHBOARD LOGS (Histórico)", "3_Dashboard_Logs.py", COLOR_PANEL, row=2)
         self.crear_boton(buttons, "🛠️ 4. APP MANTENIMIENTO (Técnico)", "4_App_Mantenimiento.py", COLOR_ACCENT, accent=True, row=3)
         self.crear_boton(buttons, "📊 5. DASHBOARD OEE (Gerencial)", "5_Dashboard_OEE.py", '#8e44ad', row=4)
+        self.crear_boton(buttons, "🤖 6. PREDICTIVO (Mantenimiento)", "6_Predictive_Maintenance.py", '#16a085', row=5)
+        self.crear_boton(buttons, "🌐 6a. PREDICTIVE API (REST)", "predictive_api.py", '#1abc9c', row=6)
 
         # Acciones secundarias
         sec = tk.Frame(main, bg=COLOR_FONDO)

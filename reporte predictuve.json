@@ -1,0 +1,14 @@
+{
+  "line": 1,
+  "mtbf_seconds": 43017.21428571428,
+  "mttr_seconds": 9.733333333333333,
+  "last_maintenance": "2026-02-26 14:00:00",
+  "predicted_seconds_to_failure": -391982.0561822857,
+  "risk_percent": 100.0,
+  "downtime_by_shift": {
+    "Morning": 0.0,
+    "Afternoon": 0.0,
+    "Night": 0.0
+  },
+  "generated_at": "2026-03-03 14:49:59.339190"
+}
