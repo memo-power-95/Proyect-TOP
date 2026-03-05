@@ -19,19 +19,28 @@ import datetime
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
 BASE = Path(__file__).parent
+import sys
 
-def find_upwards(filename, start=BASE, max_up=4):
-    p = start
-    for _ in range(max_up+1):
-        candidate = p / filename
+def get_resource_path(rel_path: str) -> Path:
+    """Return a Path to a resource whether running unpacked or inside a PyInstaller exe.
+
+    When packed with PyInstaller --onefile, resources added with --add-data are
+    available under `sys._MEIPASS` at runtime.
+    """
+    if getattr(sys, '_MEIPASS', None):
+        return Path(sys._MEIPASS) / rel_path
+    # search upwards for development mode files
+    p = BASE
+    for _ in range(5):
+        candidate = p / rel_path
         if candidate.exists():
             return candidate
         p = p.parent
-    return start / filename
+    return BASE / rel_path
 
-MAINT_FILE = find_upwards('bitacora_mantenimiento.csv')
-LOGS_FILE = find_upwards('logs_tiempo_real.csv')
-MODEL_PATH = BASE / 'predictive_model.pkl'
+MAINT_FILE = get_resource_path('bitacora_mantenimiento.csv')
+LOGS_FILE = get_resource_path('logs_tiempo_real.csv')
+MODEL_PATH = get_resource_path('predictive_model.pkl')
 
 try:
     from sklearn.ensemble import RandomForestClassifier
