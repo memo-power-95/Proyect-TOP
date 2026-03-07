@@ -4,3 +4,5 @@ pandas
 streamlit
 scikit-learn
 joblib
+flask
+psutil

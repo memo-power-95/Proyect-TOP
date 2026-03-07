@@ -4,6 +4,24 @@ import os
 import time
 
 ARCHIVO_LOGS = "logs_tiempo_real.csv"
+LINEAS_ACTIVAS = [1, 2]
+CYCLE_TIME_IDEAL_LINE = {1: 855.78, 2: 138.0}
+
+
+def _tc_obj_maq(linea, maquina):
+    base = {
+        "Top cover feeding": 105.47,
+        "Pre-weighing": 79.98,
+        "Tim dispensing": 83.60,
+        "Avl Tim": 60.69,
+        "Weighing": 83.06,
+        "Install PCB": 88.60,
+        "Fastening 1": 80.65,
+        "Fastening 2": 92.74,
+        "Avl screw": 70.32,
+        "Top unloader": 104.36,
+    }
+    return float(base.get(str(maquina), CYCLE_TIME_IDEAL_LINE.get(linea, 138.0)))
 
 def generar_reporte_logs():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -35,6 +53,28 @@ def generar_reporte_logs():
     print(f" > Producción OK:           {ok_count} piezas ({rendimiento:.1f}%)")
     print(f" > Total Scrap:             {scrap_count} piezas")
     print(f" > Eventos Micro-Paros:     {micro_count} incidencias")
+
+    if 'Linea' in df_prod.columns:
+        print("\n [RENDIMIENTO POR LINEA]")
+        for lid in LINEAS_ACTIVAS:
+            dline = df_prod[df_prod['Linea'] == lid]
+            if dline.empty:
+                print(f" > Linea {lid}: sin datos")
+                continue
+            tc_obj = CYCLE_TIME_IDEAL_LINE.get(lid, 138.0)
+            tc_real = float(dline['Tiempo_Ciclo'].mean() or 0)
+            tc_adj = max(tc_real, tc_obj)
+            rend = (tc_obj / tc_adj) * 100.0 if tc_adj > 0 else 0.0
+            print(f" > Linea {lid}: Rendimiento {rend:.1f}% | TC real {tc_real:.2f}s | Obj {tc_obj:.2f}s")
+
+            if 'Maquina' in dline.columns:
+                print(f"   - Por maquina (L{lid}):")
+                for maq, dmaq in dline.groupby('Maquina'):
+                    tc_obj_m = _tc_obj_maq(lid, maq)
+                    tc_real_m = float(dmaq['Tiempo_Ciclo'].mean() or 0)
+                    tc_adj_m = max(tc_real_m, tc_obj_m)
+                    rend_m = (tc_obj_m / tc_adj_m) * 100.0 if tc_adj_m > 0 else 0.0
+                    print(f"     * {maq}: {rend_m:.1f}% (TC {tc_real_m:.2f}s / Obj {tc_obj_m:.2f}s)")
     
     # --- GRÁFICAS DE ANÁLISIS ---
     plt.style.use('ggplot')

@@ -17,6 +17,11 @@ CATALOGO = {
     4: ["Soft Reset", 3, 75.0]
 }
 
+MAQUINAS_POR_LINEA = {
+    1: ["Top cover feeding", "Pre-weighing", "Tim dispensing", "Avl Tim", "Weighing", "Install PCB", "Fastening 1", "Fastening 2", "Avl screw", "Top unloader"],
+    2: ["Top cover feeding", "Pre-weighing", "Tim dispensing", "Avl Tim", "Weighing", "Install PCB", "Fastening 1", "Fastening 2", "Avl screw", "Top unloader"],
+}
+
 # configurar logging básico
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
@@ -26,7 +31,7 @@ def asegurar_archivo():
         if not ARCHIVO.exists():
             ARCHIVO.parent.mkdir(parents=True, exist_ok=True)
             with ARCHIVO.open('w', newline='') as f:
-                csv.writer(f).writerow(["Timestamp", "Linea", "Accion", "Duracion", "Salud_Final"])
+                csv.writer(f).writerow(["Timestamp", "Linea", "Maquina", "Accion", "Duracion", "Salud_Final"])
             logging.info('Archivo de bitácora creado: %s', ARCHIVO)
     except Exception as e:
         logging.exception('Error asegurando archivo: %s', e)
@@ -51,15 +56,15 @@ def save_config(cfg: dict):
         logging.exception('Error guardando configuración')
 
 
-def registrar_mantenimiento(linea, accion_id):
+def registrar_mantenimiento(linea, maquina, accion_id):
     try:
         ahora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         accion = CATALOGO[accion_id][0]
         dur = CATALOGO[accion_id][1]
         salud = CATALOGO[accion_id][2]
         with ARCHIVO.open('a', newline='') as f:
-            csv.writer(f).writerow([ahora, linea, accion, dur, salud])
-        logging.info('Registro guardado: linea=%s accion_id=%s', linea, accion_id)
+            csv.writer(f).writerow([ahora, linea, maquina, accion, dur, salud])
+        logging.info('Registro guardado: linea=%s maquina=%s accion_id=%s', linea, maquina, accion_id)
     except Exception as e:
         logging.exception('Error registrando mantenimiento: %s', e)
 
@@ -114,7 +119,7 @@ def crear_gui():
     ctrl.pack(fill='x')
 
     ttk.Label(ctrl, text='Línea:').grid(column=0, row=0, sticky='w')
-    linea_cb = ttk.Combobox(ctrl, values=[1, 2, 3], width=5, state='readonly')
+    linea_cb = ttk.Combobox(ctrl, values=[1, 2], width=5, state='readonly')
     linea_cb.set(cfg.get('linea', 1))
     linea_cb.grid(column=1, row=0, padx=6, pady=4)
 
@@ -143,6 +148,10 @@ def crear_gui():
         except:
             messagebox.showerror('Error', 'Línea inválida')
             return
+        maquina = maquina_cb.get()
+        if not maquina:
+            messagebox.showerror('Error', 'Seleccione una máquina')
+            return
         sel = accion_cb.get()
         if not sel:
             messagebox.showerror('Error', 'Seleccione una acción')
@@ -152,18 +161,37 @@ def crear_gui():
             messagebox.showerror('Error', 'Acción inválida')
             logging.warning('Selección de acción inválida: %s', sel)
             return
-        registrar_mantenimiento(linea, accion_id)
-        messagebox.showinfo('Registrado', f'Registro guardado para Línea {linea}')
+        registrar_mantenimiento(linea, maquina, accion_id)
+        msg = f'Registro guardado para {maquina} en Línea {linea}'
+        messagebox.showinfo('Registrado', msg)
         cargar_tabla()
 
     btn_reg = ttk.Button(ctrl, text='Registrar', command=on_registrar)
     btn_reg.grid(column=4, row=0, padx=6)
 
+    # Selector de máquina
+    ttk.Label(ctrl, text='Máquina:').grid(column=0, row=2, sticky='w')
+    maquina_cb = ttk.Combobox(ctrl, values=["Toda la línea"], width=30, state='readonly')
+    maquina_cb.set("Toda la línea")
+    maquina_cb.grid(column=1, row=2, columnspan=2, padx=6, pady=4)
+    
+    def actualizar_maquinas():
+        try:
+            linea = int(linea_cb.get())
+            maquinas = ["Toda la línea"] + MAQUINAS_POR_LINEA.get(linea, [])
+            maquina_cb.configure(values=maquinas)
+            maquina_cb.set("Toda la línea")
+        except:
+            pass
+    
+    linea_cb_original_command = linea_cb.bind('<<ComboboxSelected>>', lambda e: actualizar_maquinas())
+    actualizar_maquinas()
+
     # Tabla de últimos registros
     tbl_frm = ttk.LabelFrame(frm, text='Últimos registros', padding=6)
     tbl_frm.pack(fill='both', expand=True, pady=10)
 
-    cols = ("Timestamp", "Linea", "Accion", "Duracion", "Salud_Final")
+    cols = ("Timestamp", "Linea", "Maquina", "Accion", "Duracion", "Salud_Final")
     tree = ttk.Treeview(tbl_frm, columns=cols, show='headings')
     for c in cols:
         tree.heading(c, text=c)

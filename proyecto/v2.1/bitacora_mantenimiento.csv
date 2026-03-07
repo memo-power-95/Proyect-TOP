@@ -17,3 +17,15 @@ Timestamp,Linea,Accion,Duracion,Salud_Final
 2026-02-26 13:59:59,1,Soft Reset,3,75.0
 2026-02-26 13:59:59,1,Soft Reset,3,75.0
 2026-02-26 14:00:00,1,Soft Reset,3,75.0
+2026-03-05 14:41:18,1,Limpieza Sensor,5,100.0
+2026-03-05 14:41:28,2,Limpieza Sensor,5,100.0
+2026-03-05 19:29:14,1,Soft Reset,3,75.0
+2026-03-05 19:36:17,1,Soft Reset,3,75.0
+2026-03-05 19:36:33,1,Soft Reset,3,75.0
+2026-03-05 19:36:33,1,Soft Reset,3,75.0
+2026-03-05 19:36:34,1,Soft Reset,3,75.0
+2026-03-05 20:27:10,1,Toda la línea,Soft Reset,3,75.0
+2026-03-05 20:27:30,2,Toda la línea,Soft Reset,3,75.0
+2026-03-05 20:28:00,1,Toda la línea,Limpieza Sensor,5,100.0
+2026-03-05 20:37:32,1,Fastening 2,Limpieza Sensor,5,100.0
+2026-03-05 20:37:52,2,Tim dispensing,Soft Reset,3,75.0

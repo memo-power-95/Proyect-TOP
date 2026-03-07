@@ -30,9 +30,9 @@ grid = plt.GridSpec(2, 3, height_ratios=[1, 2], hspace=0.4)
 ax_global = fig.add_subplot(grid[0, :], facecolor=COLOR_FONDO) # Barra OEE Global arriba
 ax_l1 = fig.add_subplot(grid[1, 0], facecolor=COLOR_FONDO)     # Línea 1
 ax_l2 = fig.add_subplot(grid[1, 1], facecolor=COLOR_FONDO)     # Línea 2
-ax_l3 = fig.add_subplot(grid[1, 2], facecolor=COLOR_FONDO)     # Línea 3
+ax_empty = fig.add_subplot(grid[1, 2], facecolor=COLOR_FONDO)
 
-axes_lineas = {1: ax_l1, 2: ax_l2, 3: ax_l3}
+axes_lineas = {1: ax_l1, 2: ax_l2}
 
 # GUI state (se configura en la app)
 APP = None
@@ -124,10 +124,14 @@ def animar(i):
         lineas_activas = 0
 
         # Limpiar ejes no usados
-        for lid in [1, 2, 3]:
+        for lid in [1, 2]:
             if lid != selected:
                 axes_lineas[lid].clear()
                 axes_lineas[lid].text(0.5, 0.5, f"LÍNEA {lid} (oculta)", ha='center', color='gray')
+
+        ax_empty.clear()
+        ax_empty.axis('off')
+        ax_empty.text(0.5, 0.5, 'Modo 2 lineas', ha='center', color='gray')
 
         df_l = df[df['Linea'] == selected]
         d, c, r, o = calcular_oee(df_l)
@@ -185,7 +189,7 @@ class DashboardApp:
         ttk.Label(left, text='Controles', font=('Segoe UI', 12, 'bold')).pack(pady=4)
 
         ttk.Label(left, text='Línea (single-line mode):').pack(anchor='w')
-        cbo = ttk.Combobox(left, values=[1,2,3], textvariable=self.selected_line, state='readonly', width=6)
+        cbo = ttk.Combobox(left, values=[1,2], textvariable=self.selected_line, state='readonly', width=6)
         cbo.pack(anchor='w', pady=2)
 
         self.btn_pause = ttk.Button(left, text='Pausar', command=self.toggle_pause)

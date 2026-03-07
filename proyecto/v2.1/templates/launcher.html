@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOP SYSTEM - Portal Unificado v2.1</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1"><i class="bi bi-cpu"></i> TOP SYSTEM - LG INNOTEK</span>
+            <span class="badge bg-warning text-dark">Portal Unificado v2.1</span>
+        </div>
+    </nav>
+
+    <div class="hero-section">
+        <div class="container">
+            <h1 class="display-6 fw-bold">Control + Dashboards + Mantenimiento en un solo lugar</h1>
+            <p class="lead mb-0">Los 6 modulos integrados en la misma interfaz web</p>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3 text-center">
+                        <div class="text-muted">Procesos activos</div>
+                        <h2 class="fw-bold" id="procesos-activos">0</h2>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="text-muted">Estado</div>
+                        <span class="badge bg-success fs-6" id="sistema-estado">OPERATIVO</span>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="text-muted">Ultima actualizacion</div>
+                        <small id="ultima-actualizacion">--:--:--</small>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <button class="btn btn-danger" onclick="detenerTodos()"><i class="bi bi-stop-circle"></i> CERRAR TODO</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-pills mb-3" id="portal-tabs" role="tablist">
+            <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-control" type="button">Control</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-vivo" type="button">Dashboard Vivo</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-logs" type="button">Dashboard Logs</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-mto" type="button">Mantenimiento</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-lineas" type="button">Dashboard Líneas</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-oee" type="button">Dashboard OEE</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-predictivo" type="button">Predictivo</button></li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="tab-control">
+                <div class="row g-4" id="modulos-grid">
+                    {% for modulo in modulos %}
+                    <div class="col-md-6 col-lg-4 modulo-item" data-categoria="{{ modulo.categoria }}">
+                        <div class="card module-card h-100 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title mb-1"><span class="module-icon">{{ modulo.icon }}</span> {{ modulo.nombre }}</h5>
+                                    <span class="badge estado-badge" id="estado-{{ modulo.id }}" data-estado="stopped"><i class="bi bi-circle-fill"></i> Detenido</span>
+                                </div>
+                                <p class="card-text text-muted small">{{ modulo.descripcion }}</p>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-success btn-iniciar" id="btn-iniciar-{{ modulo.id }}" onclick="lanzarModulo({{ modulo.id }})">Iniciar</button>
+                                    <button class="btn btn-danger btn-detener" id="btn-detener-{{ modulo.id }}" onclick="detenerModulo({{ modulo.id }})" style="display:none;">Detener</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-dark text-white">Procesos activos</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead><tr><th>Modulo</th><th>PID</th><th>Estado</th><th>Inicio</th><th>CPU</th><th>Memoria</th></tr></thead>
+                                <tbody id="tabla-procesos-body">
+                                    <tr><td colspan="6" class="text-center text-muted">No hay procesos activos</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-vivo">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body row g-3 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label">Linea</label>
+                            <select class="form-select" id="vivo-linea"><option value="1">1</option><option value="2">2</option></select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Maquina</label>
+                            <select class="form-select" id="vivo-maquina"><option value="ALL">Todas</option></select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Ventana</label>
+                            <input class="form-control" id="vivo-window" type="number" value="60" min="10" max="1000">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary" onclick="cargarDashboardVivo()">Actualizar dashboard vivo</button>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <span class="badge bg-secondary" id="vivo-stats">Sin datos</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-4">
+                    <div class="col-lg-8"><div class="card shadow-sm"><div class="card-body"><canvas id="chart-vivo-trend" height="120"></canvas></div></div></div>
+                    <div class="col-lg-4"><div class="card shadow-sm"><div class="card-body"><canvas id="chart-vivo-eventos" height="120"></canvas></div></div></div>
+                </div>
+                <div class="row g-4 mt-1">
+                    <div class="col-md-6"><div class="card shadow-sm text-center"><div class="card-body"><div class="text-muted">Rendimiento Linea</div><h4 id="vivo-rend-linea">0.0%</h4><small id="vivo-linea-tc" class="text-muted">TC real -- / obj --</small></div></div></div>
+                    <div class="col-md-6"><div class="card shadow-sm text-center"><div class="card-body"><div class="text-muted">Rendimiento Maquina Seleccionada</div><h4 id="vivo-rend-maquina">--</h4></div></div></div>
+                </div>
+                <div class="row g-4 mt-1">
+                    <div class="col-12"><div class="card shadow-sm"><div class="card-body"><canvas id="chart-vivo-rend-maquinas" height="110"></canvas></div></div></div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-logs">
+                <div class="mb-3">
+                    <button class="btn btn-primary" onclick="cargarDashboardLogs()"><i class="bi bi-arrow-clockwise"></i> Actualizar</button>
+                </div>
+                <div class="row g-4 mb-3">
+                    <div class="col-md-3"><div class="card shadow-sm text-center"><div class="card-body"><div class="text-muted">Ciclos</div><h4 id="kpi-total">0</h4></div></div></div>
+                    <div class="col-md-3"><div class="card shadow-sm text-center"><div class="card-body"><div class="text-muted">OK</div><h4 id="kpi-ok">0</h4></div></div></div>
+                    <div class="col-md-3"><div class="card shadow-sm text-center"><div class="card-body"><div class="text-muted">Scrap</div><h4 id="kpi-scrap">0</h4></div></div></div>
+                    <div class="col-md-3"><div class="card shadow-sm text-center"><div class="card-body"><div class="text-muted">Rendimiento</div><h4 id="kpi-rend">0%</h4></div></div></div>
+                </div>
+                <div class="row g-4">
+                    <div class="col-lg-7"><div class="card shadow-sm"><div class="card-body"><canvas id="chart-logs-pareto" height="120"></canvas></div></div></div>
+                    <div class="col-lg-5"><div class="card shadow-sm"><div class="card-body"><canvas id="chart-logs-calidad" height="120"></canvas></div></div></div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-mto">
+                <div class="mb-3">
+                    <button class="btn btn-primary" onclick="cargarMantenimiento()"><i class="bi bi-arrow-clockwise"></i> Actualizar registros</button>
+                </div>
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body row g-3 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label">Linea</label>
+                            <select class="form-select" id="mto-linea" onchange="actualizarMaquinasMto()"><option>1</option><option>2</option></select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Máquina</label>
+                            <select class="form-select" id="mto-maquina"><option>Toda la línea</option></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Accion</label>
+                            <select class="form-select" id="mto-accion">
+                                {% for accion_id, data in catalogo.items() %}
+                                <option value="{{ accion_id }}">{{ accion_id }} - {{ data[0] }} ({{ data[1] }}s, salud {{ data[2] }}%)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-warning" onclick="registrarMantenimiento()">Registrar mantenimiento</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">Ultimos registros de mantenimiento</div>
+                    <div class="card-body table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead><tr><th>Timestamp</th><th>Linea</th><th>Máquina</th><th>Accion</th><th>Duracion</th><th>Salud final</th></tr></thead>
+                            <tbody id="tabla-mto-body"><tr><td colspan="6" class="text-center text-muted">Sin registros</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-lineas">
+                <div class="mb-3 d-flex gap-2">
+                    <button class="btn btn-primary" onclick="cargarDashboardLineas()"><i class="bi bi-arrow-clockwise"></i> Actualizar</button>
+                    <select class="form-select" id="linea-select" style="max-width: 150px;" onchange="cargarDetalleLinea()">
+                        <option value="1">Línea 1</option>
+                        <option value="2">Línea 2</option>
+                    </select>
+                </div>
+                <div class="row g-4 mb-3">
+                    <div class="col-md-3"><div class="card shadow-sm text-center"><div class="card-body"><div class="text-muted">Rendimiento</div><h3 id="linea-rend">--%</h3></div></div></div>
+                    <div class="col-md-3"><div class="card shadow-sm text-center"><div class="card-body"><div class="text-muted">TC Real</div><h4 id="linea-tc-real">-s</h4></div></div></div>
+                    <div class="col-md-3"><div class="card shadow-sm text-center"><div class="card-body"><div class="text-muted">TC Objetivo</div><h4 id="linea-tc-obj">-s</h4></div></div></div>
+                    <div class="col-md-3"><div class="card shadow-sm text-center"><div class="card-body"><div class="text-muted">Ciclos</div><h4 id="linea-ciclos">-</h4></div></div></div>
+                </div>
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-dark text-white">Registrar Mantenimiento</div>
+                    <div class="card-body">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label">Máquina</label>
+                                <select class="form-select" id="linea-maquina-select">
+                                    <option>Toda la línea</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Acción</label>
+                                <select class="form-select" id="linea-accion-select">
+                                    <option value="1">1 - Limpieza Sensor (5s, salud 100%)</option>
+                                    <option value="2">2 - Calibración Torque (10s, salud 100%)</option>
+                                    <option value="3">3 - Cambio Servomotor (20s, salud 100%)</option>
+                                    <option value="4">4 - Soft Reset (3s, salud 75%)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-warning w-100" onclick="registrarMtoLinea()"><i class="bi bi-tools"></i> Registrar Mantenimiento</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-4">
+                    <div class="col-lg-7"><div class="card shadow-sm"><div class="card-body"><div class="text-muted mb-2">Rendimiento por Máquina</div><div id="linea-maquinas-list" class="small"></div></div></div></div>
+                    <div class="col-lg-5"><div class="card shadow-sm"><div class="card-body"><div class="text-muted mb-2">Máquinas en Mantenimiento</div><div id="linea-mto-list" class="small"></div></div></div></div>
+                </div>
+                <div class="row g-4 mt-1">
+                    <div class="col-12"><div class="card shadow-sm"><div class="card-header bg-dark text-white">Últimos Mantenimientos</div><div class="card-body table-responsive"><table class="table table-sm"><thead><tr><th>Timestamp</th><th>Máquina</th><th>Acción</th><th>Duración</th><th>Salud</th></tr></thead><tbody id="linea-mto-table"><tr><td colspan="5" class="text-center text-muted">Sin registros</td></tr></tbody></table></div></div></div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-oee">
+                <div class="mb-3">
+                    <button class="btn btn-primary" onclick="cargarDashboardOee()"><i class="bi bi-arrow-clockwise"></i> Actualizar</button>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-3"><div class="card shadow-sm text-center"><div class="card-body"><div class="text-muted">OEE Global</div><h2 id="oee-global">0.0%</h2></div></div></div>
+                    <div class="col-md-3"><div class="card shadow-sm text-center"><div class="card-body"><div class="text-muted">Rendimiento General</div><h2 id="rend-global">0.0%</h2></div></div></div>
+                    <div class="col-md-6"><div class="card shadow-sm"><div class="card-body"><canvas id="chart-oee-lineas" height="120"></canvas></div></div></div>
+                </div>
+                <div class="row g-4 mt-1">
+                    <div class="col-md-4"><div class="card shadow-sm"><div class="card-body"><h6>Linea 1</h6><div id="oee-l1">-</div></div></div></div>
+                    <div class="col-md-4"><div class="card shadow-sm"><div class="card-body"><h6>Linea 2</h6><div id="oee-l2">-</div></div></div></div>
+                </div>
+                <div class="row g-4 mt-1">
+                    <div class="col-md-6"><div class="card shadow-sm"><div class="card-body"><h6>Rendimiento por maquina - Linea 1</h6><div id="oee-maq-l1">-</div></div></div></div>
+                    <div class="col-md-6"><div class="card shadow-sm"><div class="card-body"><h6>Rendimiento por maquina - Linea 2</h6><div id="oee-maq-l2">-</div></div></div></div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-predictivo">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body row g-3 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label">Línea</label>
+                            <select class="form-select" id="pred-linea">
+                                <option value="0">Ambas</option>
+                                <option value="1">Línea 1</option>
+                                <option value="2">Línea 2</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3"><label class="form-label">Desde</label><input class="form-control" type="datetime-local" id="pred-start"></div>
+                        <div class="col-md-3"><label class="form-label">Hasta</label><input class="form-control" type="datetime-local" id="pred-end"></div>
+                        <div class="col-md-2">
+                            <button class="btn btn-success w-100" onclick="cargarPredictivo()"><i class="bi bi-calculator"></i> Analizar</button>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <small class="text-muted" id="pred-timestamp">--</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPIs globales -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <div class="card shadow-sm text-center">
+                            <div class="card-body">
+                                <div class="text-muted small">Riesgo Sistema</div>
+                                <h2 class="fw-bold" id="pred-riesgo-sistema" style="font-size:2.2rem;">0%</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card shadow-sm text-center">
+                            <div class="card-body">
+                                <canvas id="chart-pred-riesgo" height="130"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card shadow-sm text-center">
+                            <div class="card-body">
+                                <div class="text-muted small">Salud Prom. L1</div>
+                                <h3 id="pred-salud-l1">--%</h3>
+                                <small class="text-muted" id="pred-risk-l1">Riesgo: --</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card shadow-sm text-center">
+                            <div class="card-body">
+                                <div class="text-muted small">Salud Prom. L2</div>
+                                <h3 id="pred-salud-l2">--%</h3>
+                                <small class="text-muted" id="pred-risk-l2">Riesgo: --</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumen MTBF/MTTR por línea -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-primary text-white py-2"><small><i class="bi bi-clock-history"></i> Línea 1 - MTBF / MTTR</small></div>
+                            <div class="card-body py-2">
+                                <div class="row text-center">
+                                    <div class="col-4"><small class="text-muted">MTBF</small><div class="fw-bold" id="pred-mtbf-l1">--</div></div>
+                                    <div class="col-4"><small class="text-muted">MTTR</small><div class="fw-bold" id="pred-mttr-l1">--</div></div>
+                                    <div class="col-4"><small class="text-muted">Último MTO</small><div class="fw-bold small" id="pred-lastmto-l1">--</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-info text-white py-2"><small><i class="bi bi-clock-history"></i> Línea 2 - MTBF / MTTR</small></div>
+                            <div class="card-body py-2">
+                                <div class="row text-center">
+                                    <div class="col-4"><small class="text-muted">MTBF</small><div class="fw-bold" id="pred-mtbf-l2">--</div></div>
+                                    <div class="col-4"><small class="text-muted">MTTR</small><div class="fw-bold" id="pred-mttr-l2">--</div></div>
+                                    <div class="col-4"><small class="text-muted">Último MTO</small><div class="fw-bold small" id="pred-lastmto-l2">--</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficas de riesgo por máquina y tendencia de salud -->
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header bg-dark text-white py-2"><small>Riesgo por Máquina</small></div><div class="card-body"><canvas id="chart-pred-maquinas" height="200"></canvas></div></div></div>
+                    <div class="col-lg-6"><div class="card shadow-sm"><div class="card-header bg-dark text-white py-2"><small>Tendencia Salud (últimos registros)</small></div><div class="card-body"><canvas id="chart-pred-salud-trend" height="200"></canvas></div></div></div>
+                </div>
+
+                <!-- Tabla detalle de máquinas -->
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-dark text-white py-2 d-flex justify-content-between">
+                        <small><i class="bi bi-table"></i> Detalle por Máquina</small>
+                        <select class="form-select form-select-sm" id="pred-tabla-linea" style="width:auto;" onchange="renderPredTabla()">
+                            <option value="all">Todas las líneas</option>
+                            <option value="1">Línea 1</option>
+                            <option value="2">Línea 2</option>
+                        </select>
+                    </div>
+                    <div class="card-body table-responsive p-2">
+                        <table class="table table-sm table-hover mb-0 small">
+                            <thead>
+                                <tr>
+                                    <th>Línea</th>
+                                    <th>Máquina</th>
+                                    <th>Salud Actual</th>
+                                    <th>Tendencia</th>
+                                    <th>TC Prom</th>
+                                    <th>TC Obj</th>
+                                    <th>Desv%</th>
+                                    <th>Errores</th>
+                                    <th>Scrap</th>
+                                    <th>Riesgo</th>
+                                    <th>Alerta</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pred-tabla-body">
+                                <tr><td colspan="11" class="text-center text-muted">Presione Analizar</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Downtime por turno -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6"><div class="card shadow-sm"><div class="card-body"><canvas id="chart-pred-shifts-l1" height="120"></canvas></div></div></div>
+                    <div class="col-md-6"><div class="card shadow-sm"><div class="card-body"><canvas id="chart-pred-shifts-l2" height="120"></canvas></div></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-1">TOP SYSTEM - LG INNOTEK</p>
+            <small class="text-muted">Directorio: <code id="directorio-base">--</code></small>
+        </div>
+    </footer>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notification-toast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto" id="toast-title">Notificacion</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toast-message">Mensaje</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

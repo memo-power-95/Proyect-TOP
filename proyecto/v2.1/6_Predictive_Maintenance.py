@@ -40,7 +40,12 @@ def get_resource_path(rel_path: str) -> Path:
 
 MAINT_FILE = get_resource_path('bitacora_mantenimiento.csv')
 LOGS_FILE = get_resource_path('logs_tiempo_real.csv')
+LOGS_POR_LINEA = {
+    1: BASE / 'logs_tiempo_real_linea_1.csv',
+    2: BASE / 'logs_tiempo_real_linea_2.csv',
+}
 MODEL_PATH = get_resource_path('predictive_model.pkl')
+MODEL = None
 
 try:
     from sklearn.ensemble import RandomForestClassifier
@@ -157,6 +162,66 @@ def save_model(model):
         logging.info('Modelo guardado en %s', MODEL_PATH)
     except Exception:
         logging.exception('No se pudo guardar el modelo')
+
+
+def _read_logs_both_lines():
+    """Lee logs de ambas líneas y retorna dataframe combinado."""
+    dfs = []
+    for lid, path in LOGS_POR_LINEA.items():
+        if path.exists():
+            try:
+                df = pd.read_csv(path)
+                dfs.append(df)
+            except Exception:
+                pass
+    if not dfs:
+        return pd.DataFrame(columns=['Timestamp', 'Linea', 'Maquina', 'Salud', 'Tiempo_Ciclo', 'Evento'])
+    df = pd.concat(dfs, ignore_index=True)
+    for col in ['Linea', 'Salud', 'Tiempo_Ciclo']:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+    if 'Timestamp' in df.columns:
+        df['Timestamp'] = pd.to_datetime(df['Timestamp'], errors='coerce')
+    return df
+
+
+def build_training_data_from_logs(logs_path=None, window_hours=1):
+    """Construye datos de entrenamiento desde logs de ambas líneas."""
+    df = _read_logs_both_lines()
+    if df.empty:
+        return None
+    df = df.sort_values('Timestamp')
+    df['t'] = df['Timestamp'].dt.floor(f'{window_hours}h')
+    df['linea'] = df['Linea']
+    grouped = df.groupby(['t', 'linea']).agg(
+        avg_tc=('Tiempo_Ciclo', 'mean'),
+        total=('Evento', 'count'),
+        scrap=('Evento', lambda x: (x.astype(str).str.contains('SCRAP', na=False)).sum()),
+        error=('Evento', lambda x: (x.isin(['CRITICAL', 'SENSOR_FAIL', 'STUCK'])).sum()),
+    ).reset_index()
+    return grouped
+
+
+def generate_report(df_maint, line, start=None, end=None):
+    """Genera reporte predictivo combinando bitácora + logs reales."""
+    mtbf, mttr, last_ts = compute_mtbf_mttr(df_maint, line)
+    remaining, risk = predict_time_to_failure(mtbf, last_ts)
+    shifts = downtime_by_shift(df_maint, line, start, end)
+
+    now = pd.Timestamp.now()
+    rpt = {
+        'line': line,
+        'mtbf_seconds': mtbf,
+        'mttr_seconds': mttr,
+        'mtbf_hours': (mtbf / 3600) if mtbf is not None else None,
+        'mttr_minutes': (mttr / 60) if mttr is not None else None,
+        'last_maintenance': str(last_ts) if last_ts is not None else None,
+        'predicted_seconds_to_failure': remaining,
+        'risk_percent': min(100.0, max(0.0, risk)) if risk is not None else None,
+        'downtime_by_shift': shifts,
+        'generated_at': str(now),
+    }
+    return rpt
 
 
 class App:

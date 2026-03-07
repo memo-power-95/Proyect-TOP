@@ -1,0 +1,218 @@
+/* TOP SYSTEM - Custom Styles */
+
+:root {
+    --lg-orange: #e67e22;
+    --lg-dark: #2c3e50;
+    --lg-panel: #34495e;
+    --lg-success: #27ae60;
+    --lg-danger: #e74c3c;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, var(--lg-dark) 0%, var(--lg-panel) 100%);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.hero-section h1 {
+    margin-bottom: 0.5rem;
+}
+
+.hero-section .lead {
+    opacity: 0.9;
+}
+
+/* Module Cards */
+.module-card {
+    transition: all 0.3s ease;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.module-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important;
+}
+
+.module-icon {
+    font-size: 1.5rem;
+    margin-right: 0.5rem;
+}
+
+/* Estado Badge */
+.estado-badge {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.65rem;
+    transition: all 0.3s ease;
+}
+
+.estado-badge[data-estado="running"] {
+    background-color: var(--lg-success) !important;
+}
+
+.estado-badge[data-estado="stopped"] {
+    background-color: #6c757d !important;
+}
+
+.estado-badge i {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Process Info */
+.process-info {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+/* Botones */
+.btn-iniciar, .btn-detener {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.btn-iniciar:hover {
+    transform: scale(1.05);
+}
+
+.btn-detener:hover {
+    transform: scale(1.05);
+}
+
+/* Badge Colors Custom */
+.bg-purple {
+    background-color: #8e44ad !important;
+}
+
+/* Tabla de procesos */
+.table-hover tbody tr:hover {
+    background-color: #f1f3f5;
+}
+
+/* Toast personalizado */
+.toast {
+    min-width: 300px;
+}
+
+.toast-success {
+    border-left: 4px solid var(--lg-success);
+}
+
+.toast-error {
+    border-left: 4px solid var(--lg-danger);
+}
+
+.toast-info {
+    border-left: 4px solid #3498db;
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+
+footer code {
+    background-color: var(--lg-panel);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+/* Responsive ajustes */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 2rem 0;
+    }
+    
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .module-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modulo-item {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Loading spinner */
+.spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.spinner-border-xl {
+    width: 4rem;
+    height: 4rem;
+    border-width: 0.4rem;
+}
+
+/* Filtros de categoría */
+.btn-group .btn {
+    border-radius: 0;
+    transition: all 0.3s ease;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+
+.btn-group .btn.active {
+    background-color: var(--lg-orange) !important;
+    border-color: var(--lg-orange) !important;
+}
+
+/* Ocultar módulos filtrados */
+.modulo-item.hidden {
+    display: none;
+}
